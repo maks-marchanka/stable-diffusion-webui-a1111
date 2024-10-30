@@ -77,6 +77,31 @@ def expand_crop_region(crop_region, processing_width, processing_height, image_w
     return x1, y1, x2, y2
 
 
+def expand_too_small_crop_region(crop_region, processing_width, processing_height, image_width, image_height):
+    """expands crop region to not have width and height smaller then processing_width and processing_height"""
+
+    def _expand(c1, c2, processing_dimension, image_dimension):
+        if (diff := processing_dimension - (c2 - c1)) > 0:
+            diff_w_l = diff // 2
+            c1 -= diff_w_l
+            c2 += diff - diff_w_l
+            if c2 >= image_dimension:
+                c1 -= c2 - image_dimension
+                c2 = image_dimension
+            if c1 < 0:
+                c2 = min(c2 - c1, image_dimension)
+                c1 = 0
+        return c1, c2
+
+    x1, y1, x2, y2 = crop_region
+    x1, x2 = _expand(x1, x2, processing_width, image_width)
+    y1, y2 = _expand(y1, y2, processing_height, image_height)
+    new_crop_region = x1, y1, x2, y2
+    if new_crop_region != crop_region:
+        print(f"Crop region {crop_region} was smaller then resolution and has been expanded to {new_crop_region}")
+    return new_crop_region
+
+
 def fill(image, mask):
     """fills masked regions with colors from image using blur. Not extremely effective."""
 
